@@ -1,0 +1,2 @@
+class TennisPlayer < ApplicationRecord
+end

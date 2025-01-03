@@ -1,0 +1,7 @@
+<div class="flex <%= message.role == 'user' ? 'justify-end' : 'justify-start' %>">
+  <div
+    class="<%= message.role == 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800' %> max-w-xs md:max-w-md p-3 rounded-lg shadow-lg space-y-2"
+  >
+    <%= message.content %>
+  </div>
+</div>

@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  full_name: MyString
+  date_of_birth: 2025-01-02
+  height: 1
+  handedness: MyString
+  backhand: MyString
+
+two:
+  full_name: MyString
+  date_of_birth: 2025-01-02
+  height: 1
+  handedness: MyString
+  backhand: MyString
