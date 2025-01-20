@@ -10,11 +10,32 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_01_02_124228) do
+ActiveRecord::Schema[8.0].define(version: 2025_01_17_134057) do
   create_table "chats", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "matches", force: :cascade do |t|
+    t.integer "tournament_year_id", null: false
+    t.string "tournament_slug", null: false
+    t.string "tournament_reference", null: false
+    t.string "round"
+    t.integer "duration"
+    t.integer "year_of_tournament"
+    t.integer "player_1_id", null: false
+    t.integer "player_2_id", null: false
+    t.integer "player_winner_id"
+    t.string "player_1_slug", null: false
+    t.string "player_2_slug", null: false
+    t.string "player_winner_slug"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["player_1_id"], name: "index_matches_on_player_1_id"
+    t.index ["player_2_id"], name: "index_matches_on_player_2_id"
+    t.index ["player_winner_id"], name: "index_matches_on_player_winner_id"
+    t.index ["tournament_year_id"], name: "index_matches_on_tournament_year_id"
   end
 
   create_table "messages", force: :cascade do |t|
@@ -26,15 +47,50 @@ ActiveRecord::Schema[8.0].define(version: 2025_01_02_124228) do
     t.index ["chat_id"], name: "index_messages_on_chat_id"
   end
 
+  create_table "player_rankings", force: :cascade do |t|
+    t.integer "tennis_player_id", null: false
+    t.date "week_date", null: false
+    t.integer "ranking", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["tennis_player_id"], name: "index_player_rankings_on_tennis_player_id"
+  end
+
   create_table "tennis_players", force: :cascade do |t|
-    t.string "full_name", null: false
+    t.string "full_name"
     t.date "date_of_birth"
     t.integer "height"
-    t.string "handedness"
-    t.string "backhand"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.string "tennis_player_slug", null: false
+    t.string "player_url"
+    t.integer "career_highest_ranking"
+    t.date "career_highest_ranking_date"
+    t.decimal "career_prize_money", precision: 15, scale: 2
+    t.string "playing_style"
+    t.integer "age"
+    t.integer "weight"
+    t.string "place_of_birth"
+    t.string "current_coach"
+    t.integer "nb_career_titles"
+    t.integer "nb_career_wins"
+    t.integer "nb_career_losses"
+    t.integer "nb_career_matches"
+    t.index ["tennis_player_slug"], name: "index_tennis_players_on_tennis_player_slug", unique: true
+  end
+
+  create_table "tournament_years", force: :cascade do |t|
+    t.string "tournament_reference"
+    t.string "tournament_slug"
+    t.string "tournament_name"
+    t.string "tournament_category"
+    t.string "tournament_type"
+    t.string "tournament_winner_single_tennis_player_slug"
+    t.integer "tournament_year"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
 
   add_foreign_key "messages", "chats"
+  add_foreign_key "player_rankings", "tennis_players"
 end
