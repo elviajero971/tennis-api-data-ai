@@ -14,7 +14,7 @@ module Scrapers
         week_date_str = week_date.strftime("%Y-%m-%d")
         puts "Processing week: #{week_date_str}"
 
-        PlayerRankings::PlayerRankingScraper.new("0-100", week_date_str).fetch
+        PlayerRankings::CreateOrUpdatePlayerRankingWeek.new("0-100", week_date_str).fetch
       end
 
       puts "Finished bulk scraping process."

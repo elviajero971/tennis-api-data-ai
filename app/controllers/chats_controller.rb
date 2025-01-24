@@ -25,6 +25,7 @@ class ChatsController < ApplicationController
       You have multiple tasks to do:
       1 - Translate this question into an SQL query to retrieve the correct data from the database.
       2 - Respond with only the SQL query as a plain string, without any formatting like backticks or code blocks.
+      3 - If you don't find any data, respond with this message: "Sorry, no data was found for your query."
 
       Example: SELECT * FROM tennis_players WHERE full_name = 'Roger Federer'
     PROMPT

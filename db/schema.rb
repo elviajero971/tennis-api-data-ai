@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_01_17_134057) do
+ActiveRecord::Schema[8.0].define(version: 2025_01_22_200215) do
   create_table "chats", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
@@ -32,9 +32,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_01_17_134057) do
     t.string "player_winner_slug"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "score"
+    t.string "ending"
     t.index ["player_1_id"], name: "index_matches_on_player_1_id"
     t.index ["player_2_id"], name: "index_matches_on_player_2_id"
     t.index ["player_winner_id"], name: "index_matches_on_player_winner_id"
+    t.index ["tournament_year_id", "player_1_id", "player_2_id"], name: "index_matches_on_year_and_players", unique: true
     t.index ["tournament_year_id"], name: "index_matches_on_tournament_year_id"
   end
 

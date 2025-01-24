@@ -9,7 +9,7 @@ module Tournaments
     def call
       puts "Starting the tournaments data scraping process for year: #{year}..."
 
-      tournaments_year_data = Tournaments::AtpTournamentsPerYearScraper.new(year).fetch_tournaments_year_data
+      tournaments_year_data = Tournaments::AtpTournamentsPerYearScraper.new(year).fetch
 
       tournaments_year_data.each do |tournament_year|
         tournament_year_data = {

@@ -1,4 +1,5 @@
 require "selenium-webdriver"
+require "nokogiri"
 
 module TennisPlayers
   class AtpPlayerProfileScraper < ::Scrapers::BaseScraper
@@ -12,23 +13,26 @@ module TennisPlayers
       begin
         @driver.navigate.to(player_url)
 
+        html = @driver.page_source
+        doc = Nokogiri::HTML(html)
+
         data = {
-          full_name: extract_full_name,
-          age: calculate_age,
-          date_of_birth: extract_date_of_birth,
-          weight: extract_weight,
-          height: extract_height,
-          playing_style: extract_playing_style,
+          full_name: extract_full_name(doc),
+          age: calculate_age(doc),
+          date_of_birth: extract_date_of_birth(doc),
+          weight: extract_weight(doc),
+          height: extract_height(doc),
+          playing_style: extract_playing_style(doc),
           player_url: player_url,
-          career_highest_ranking: extract_career_highest_ranking,
-          career_highest_ranking_date: extract_career_highest_ranking_date,
-          place_of_birth: extract_place_of_birth,
-          current_coach: extract_coach,
-          career_prize_money: extract_career_prize_money,
-          nb_career_titles: extract_nb_career_titles,
-          nb_career_wins: extract_nb_career_wins,
-          nb_career_losses: extract_nb_career_losses,
-          nb_career_matches: extract_nb_career_wins.to_i + extract_nb_career_losses.to_i
+          career_highest_ranking: extract_career_highest_ranking(doc),
+          career_highest_ranking_date: extract_career_highest_ranking_date(doc),
+          place_of_birth: extract_place_of_birth(doc),
+          current_coach: extract_coach(doc),
+          career_prize_money: extract_career_prize_money(doc),
+          nb_career_titles: extract_nb_career_titles(doc),
+          nb_career_wins: extract_nb_career_wins(doc),
+          nb_career_losses: extract_nb_career_losses(doc),
+          nb_career_matches: extract_nb_career_wins(doc).to_i + extract_nb_career_losses(doc).to_i
         }
 
         puts "Player data: #{data}"
@@ -46,116 +50,123 @@ module TennisPlayers
     attr_reader :tennis_player_slug
 
     def player_url
-      "https://www.atptour.com/en/players/#{tennis_player_slug}/overview"
+      "#{BASE_URL}/en/players/#{tennis_player_slug}/overview"
     end
 
-    def extract_full_name
-      @driver.find_element(css: "div.atp_player_content div.player_profile div.player_name span").text.strip
-    rescue Selenium::WebDriver::Error::NoSuchElementError
+    def extract_full_name(doc)
+      doc.css("div.atp_player_content div.player_profile div.player_name span").text.strip
+    rescue
       nil
     end
 
-    def extract_nb_career_wins_and_losses
-      @driver.find_element(css: "div.atp_player_content div.player_profile div.atp_player-stats div.stats-content div.player-stats-details:nth-of-type(2) div.wins").text.strip
-    rescue Selenium::WebDriver::Error::NoSuchElementError
+    def extract_nb_career_wins_and_losses(doc)
+      doc.css("div.atp_player_content div.player_profile div.atp_player-stats div.stats-content div.player-stats-details:nth-of-type(2) div.wins").text.strip
+    rescue
       nil
     end
 
-    def extract_nb_career_losses
-      career_wins_and_losses = extract_nb_career_wins_and_losses
+    def extract_nb_career_losses(doc)
+      career_wins_and_losses = extract_nb_career_wins_and_losses(doc)
       career_losses = career_wins_and_losses.split("\n").first.split(" - ").last.strip
       career_losses.to_i
+    rescue
+      nil
     end
 
-    def extract_nb_career_wins
-      career_wins_and_losses = extract_nb_career_wins_and_losses
+    def extract_nb_career_wins(doc)
+      career_wins_and_losses = extract_nb_career_wins_and_losses(doc)
       career_wins = career_wins_and_losses.split("\n").first.split(" - ").first.strip
       career_wins.to_i
+    rescue
+      nil
     end
 
-    def extract_nb_career_titles
-      career_titles = @driver.find_element(css: "div.atp_player_content div.player_profile div.atp_player-stats div.stats-content div.player-stats-details:nth-of-type(2) div.titles").text.strip
+    def extract_nb_career_titles(doc)
+      career_titles = doc.css("div.atp_player_content div.player_profile div.atp_player-stats div.stats-content div.player-stats-details:nth-of-type(2) div.titles").text.strip
       career_titles = career_titles.split("\n").first.strip
       career_titles.to_i
-    rescue Selenium::WebDriver::Error::NoSuchElementError
+    rescue
       nil
     end
 
-    def extract_career_prize_money
-      prize_money = @driver.find_element(css: "div.atp_player_content div.player_profile div.atp_player-stats div.stats-content div.player-stats-details:nth-of-type(2) div.prize_money").text.strip
+    def extract_career_prize_money(doc)
+      prize_money = doc.css("div.atp_player_content div.player_profile div.atp_player-stats div.stats-content div.player-stats-details:nth-of-type(2) div.prize_money").text.strip
       prize_money.gsub(/[$,]/, "").to_i
-    rescue Selenium::WebDriver::Error::NoSuchElementError
+    rescue
       nil
     end
 
-    def extract_playing_style
-      @driver.find_element(css: "div.atp_player-personaldetails div.personal_details div.pd_content ul.pd_right li:nth-of-type(3) span:nth-of-type(2)").text.strip
-    rescue Selenium::WebDriver::Error::NoSuchElementError
+    def extract_playing_style(doc)
+      doc.css("div.atp_player-personaldetails div.personal_details div.pd_content ul.pd_right li:nth-of-type(3) span:nth-of-type(2)").text.strip
+    rescue
       nil
     end
 
-    def extract_weight
-      weight = @driver.find_element(css: "div.atp_player-personaldetails div.personal_details div.pd_content ul.pd_left li:nth-of-type(2) span:nth-of-type(2)").text.strip
+    def extract_weight(doc)
+      weight = doc.css("div.atp_player-personaldetails div.personal_details div.pd_content ul.pd_left li:nth-of-type(2) span:nth-of-type(2)").text.strip
       weight.match(/\((.*?)kg\)/)[1].to_i
-    rescue Selenium::WebDriver::Error::NoSuchElementError
+    rescue
       nil
     end
 
-
-    def extract_height
-      height = @driver.find_element(css: "div.atp_player-personaldetails div.personal_details div.pd_content ul.pd_left li:nth-of-type(3) span:nth-of-type(2)").text.strip
+    def extract_height(doc)
+      height = doc.css("div.atp_player-personaldetails div.personal_details div.pd_content ul.pd_left li:nth-of-type(3) span:nth-of-type(2)").text.strip
       height.match(/\((.*?)cm\)/)[1].to_i
-    rescue Selenium::WebDriver::Error::NoSuchElementError
+    rescue
       nil
     end
 
-    def extract_date_of_birth
-      raw_data = @driver.find_element(css: "div.atp_player-personaldetails div.personal_details div.pd_content ul.pd_left li:nth-of-type(1) span:nth-of-type(2)").text.strip
+    def extract_date_of_birth(doc)
+      raw_data = doc.css("div.atp_player-personaldetails div.personal_details div.pd_content ul.pd_left li:nth-of-type(1) span:nth-of-type(2)").text.strip
       if raw_data =~ /\d{4}\/\d{2}\/\d{2}/
         Date.strptime(raw_data.match(/\d{4}\/\d{2}\/\d{2}/)[0], "%Y/%m/%d")
       else
         raise ArgumentError, "Invalid input format. Unable to parse date from: #{raw_data}"
       end
-    rescue Selenium::WebDriver::Error::NoSuchElementError
+    rescue
       nil
     end
 
-    def calculate_age
+    def calculate_age(doc)
       today = Date.today
-      age = today.year - extract_date_of_birth.year
-      age -= 1 if today < extract_date_of_birth + age.years
+      birth_date = extract_date_of_birth(doc)
+      return nil unless birth_date
+
+      age = today.year - birth_date.year
+      age -= 1 if today < birth_date + age.years
       age
-    end
-
-    def extract_career_highest_ranking_raw
-      @driver.find_element(css: "div.atp_player-stats div.stats-content div.player-stats-details:nth-of-type(2) div.stat").text.strip
-    rescue Selenium::WebDriver::Error::NoSuchElementError
+    rescue
       nil
     end
 
-    def extract_career_highest_ranking
-      extract_career_highest_ranking_raw.split("\n").first.strip.to_i
-    rescue Selenium::WebDriver::Error::NoSuchElementError
+    def extract_career_highest_ranking_raw(doc)
+      doc.css("div.atp_player-stats div.stats-content div.player-stats-details:nth-of-type(2) div.stat").text.strip
+    rescue
       nil
     end
 
-    def extract_career_highest_ranking_date
-      ranking_date = extract_career_highest_ranking_raw.split("\n").last.strip
+    def extract_career_highest_ranking(doc)
+      extract_career_highest_ranking_raw(doc).split("\n").first.strip.to_i
+    rescue
+      nil
+    end
+
+    def extract_career_highest_ranking_date(doc)
+      ranking_date = extract_career_highest_ranking_raw(doc).split("\n").last.strip
       ranking_date.match(/\((.*?)\)/)[1].to_date
-    rescue Selenium::WebDriver::Error::NoSuchElementError
+    rescue
       nil
     end
 
-
-    def extract_place_of_birth
-      @driver.find_element(css: "div.atp_player-personaldetails div.personal_details div.pd_content ul.pd_right li:nth-of-type(2) span:nth-of-type(2)").text.strip
-    rescue Selenium::WebDriver::Error::NoSuchElementError
+    def extract_place_of_birth(doc)
+      doc.css("div.atp_player-personaldetails div.personal_details div.pd_content ul.pd_right li:nth-of-type(2) span:nth-of-type(2)").text.strip
+    rescue
       nil
     end
 
-    def extract_coach
-      @driver.find_element(css: "div.atp_player-personaldetails div.personal_details div.pd_content ul.pd_right li:nth-of-type(4) span:nth-of-type(2)").text.strip
-    rescue Selenium::WebDriver::Error::NoSuchElement
+    def extract_coach(doc)
+      doc.css("div.atp_player-personaldetails div.personal_details div.pd_content ul.pd_right li:nth-of-type(4) span:nth-of-type(2)").text.strip
+    rescue
       nil
     end
 
@@ -171,7 +182,3 @@ module TennisPlayers
     end
   end
 end
-
-
-
-

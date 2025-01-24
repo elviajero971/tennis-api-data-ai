@@ -2,7 +2,6 @@
 
 module Matches
   class AtpMatchesFromTournamentScraper < ::Scrapers::BaseScraper
-    ARCHIVE_ATP_TOURNAMENT_URL = "https://www.atptour.com/en/scores/archive"
     def initialize(slug:, reference:, year:)
       super()
       @year = year
@@ -11,12 +10,10 @@ module Matches
     end
 
     def fetch
-      @driver.navigate.to("#{ARCHIVE_ATP_TOURNAMENT_URL}/#{slug}/#{reference}/#{year}/results")
-      sleep(2)
+      @driver.navigate.to("#{BASE_URL}/en/scores/archive/#{slug}/#{reference}/#{year}/results")
+      # sleep(2)
 
       html = @driver.find_element(css: "div.atp_accordion-items").attribute("outerHTML")
-
-      puts "tournament matches html: #{html}"
 
       parse_html(html)
     rescue StandardError => e
@@ -40,14 +37,10 @@ module Matches
         round_matches = extract_round_matches_data(round)
         tournament_matches_data << round_matches
       end
-
-      puts "tournament matches datas #{tournament_matches_data.flatten}"
-      puts "nb tournament matches datas #{tournament_matches_data.flatten.size}"
       tournament_matches_data.flatten
     end
 
     def extract_round_matches_data(round)
-      puts "player 2 score: #{extract_match_score(round)}"
       round.css("div.match-group div.match-group-content div.match").map do |match|
         {
           year_of_tournament: year,
@@ -64,7 +57,41 @@ module Matches
     end
 
     def extract_round(match)
-      match.css("div.match-header span").first&.text&.strip
+      round_text = match.css("div.match-header span").first&.text
+      # split on the last dash to get the round
+      # Semi-finals - Centre Court => Semi-finals
+      round_text = round_text.split(" - ").first
+
+      if round_text.present?
+        case round_text
+        when "Finals -"
+          "final"
+        when "Semi-Finals -"
+          "semi_final"
+        when "Quarter-finals -"
+          "quarter_final"
+        when "Quarter-finals -"
+          "quarter_final"
+        when "Round of 16 -"
+          "round_of_16"
+        when "Round of 32 -"
+          "round_of_32"
+        when "Round of 64 -"
+          "round_of_64"
+        when "Round of 128 -"
+          "round_of_128"
+        when "1st Round Qualifying"
+          "first_round_qualifying"
+        when "2nd Round Qualifying"
+          "second_round_qualifying"
+        when "3rd Round Qualifying"
+          "third_round_qualifying"
+        when "Round Robin -"
+          "round_robin"
+        else
+          round_text.downcase.gsub(" ", "_")
+        end
+      end
     end
 
     def extract_duration(match)

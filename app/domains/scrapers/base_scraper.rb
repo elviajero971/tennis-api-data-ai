@@ -2,6 +2,7 @@ require "selenium-webdriver"
 
 module Scrapers
   class BaseScraper
+    BASE_URL = "https://www.atptour.com"
     def initialize
       @driver = Selenium::WebDriver.for(:chrome, options: chrome_options)
     end
