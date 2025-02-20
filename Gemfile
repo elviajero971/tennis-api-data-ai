@@ -77,4 +77,5 @@ group :test do
   gem "capybara"
   gem "webmock"
   gem "vcr"
+  gem "factory_bot_rails"
 end
