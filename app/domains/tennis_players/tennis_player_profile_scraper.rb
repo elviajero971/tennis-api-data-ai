@@ -2,16 +2,40 @@ require "selenium-webdriver"
 require "nokogiri"
 
 module TennisPlayers
-  class AtpPlayerProfileScraper < ::Scrapers::BaseScraper
+  class TennisPlayerProfileScraper < ::Scrapers::BaseScraper
 
     def initialize(tennis_player_slug)
       super()
       @tennis_player_slug = tennis_player_slug
     end
 
-    def fetch_player_data
+    def fetch
       begin
         @driver.navigate.to(player_url)
+
+        puts "starting the scraping process using Selenium for initial load..."
+
+        dismiss_cookie_banner
+
+        # print html elements
+        wait = Selenium::WebDriver::Wait.new(timeout: 10)
+        singles_button = wait.until {
+          @driver.find_element(css: "div.player_profile div.atp_player-stats div.stats-type div.tab-switcher ul li:nth-of-type(1) a")
+        }
+        puts "HTML Content of Element: #{singles_button.attribute('outerHTML')}"
+        puts "Text Content of Element: #{singles_button.text}"
+
+        puts "singles_button.displayed?: #{singles_button.displayed?}"
+        puts "singles_button.enabled?: #{singles_button.enabled?}"
+
+        # Ensure the element is interactable before clicking
+        if singles_button.displayed? && singles_button.enabled?
+          puts "Clicking on the Singles button..."
+          singles_button.click
+        else
+          puts "Singles button is not interactable."
+          return nil
+        end
 
         html = @driver.page_source
         doc = Nokogiri::HTML(html)
@@ -36,6 +60,7 @@ module TennisPlayers
         }
 
         puts "Player data: #{data}"
+
         data
       rescue StandardError => e
         puts "An error occurred: #{e.message}"
@@ -48,6 +73,33 @@ module TennisPlayers
     private
 
     attr_reader :tennis_player_slug
+
+    def dismiss_cookie_banner
+      begin
+        wait = Selenium::WebDriver::Wait.new(timeout: 10)
+
+        overlay = @driver.find_elements(css: "div.onetrust-pc-dark-filter").first
+        if overlay
+          @driver.execute_script("arguments[0].remove();", overlay)
+          # sleep(0.5) # Give time for UI to update
+        end
+
+        cookie_button = wait.until {
+          btn = @driver.find_element(css: "button#onetrust-accept-btn-handler")
+          btn if btn.displayed? && btn.enabled?
+        }
+        # Use JavaScript to click in case of interception error
+        @driver.execute_script("arguments[0].click();", cookie_button)
+        # sleep(1)
+      rescue Selenium::WebDriver::Error::NoSuchElementError
+        puts "No cookie consent popup found, continuing..."
+      rescue Selenium::WebDriver::Error::ElementClickInterceptedError
+        puts "Element click intercepted, retrying with JavaScript..."
+        @driver.execute_script("arguments[0].click();", cookie_button)
+      rescue Selenium::WebDriver::Error::TimeoutError
+        puts "Timed out waiting for cookie banner, skipping..."
+      end
+    end
 
     def player_url
       "#{BASE_URL}/en/players/#{tennis_player_slug}/overview"

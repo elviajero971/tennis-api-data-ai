@@ -145,6 +145,5 @@ module Matches
 
       scores_player_1.zip(scores_player_2).map { |s1, s2| "#{s1}/#{s2}" }.join(" ")
     end
-
   end
 end
