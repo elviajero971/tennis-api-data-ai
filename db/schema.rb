@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_01_22_200215) do
+ActiveRecord::Schema[8.0].define(version: 2025_02_26_210308) do
   create_table "chats", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
@@ -62,23 +62,33 @@ ActiveRecord::Schema[8.0].define(version: 2025_01_22_200215) do
   create_table "tennis_players", force: :cascade do |t|
     t.string "full_name"
     t.date "date_of_birth"
-    t.integer "height"
+    t.integer "height_in_cm"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "tennis_player_slug", null: false
     t.string "player_url"
-    t.integer "career_highest_ranking"
-    t.date "career_highest_ranking_date"
+    t.integer "career_highest_ranking_singles"
+    t.date "career_highest_ranking_date_singles"
     t.decimal "career_prize_money", precision: 15, scale: 2
-    t.string "playing_style"
+    t.string "play_hand"
     t.integer "age"
-    t.integer "weight"
+    t.integer "weight_in_kg"
     t.string "place_of_birth"
     t.string "current_coach"
-    t.integer "nb_career_titles"
-    t.integer "nb_career_wins"
-    t.integer "nb_career_losses"
-    t.integer "nb_career_matches"
+    t.integer "nb_career_titles_singles"
+    t.integer "nb_career_wins_singles"
+    t.integer "nb_career_losses_singles"
+    t.integer "nb_career_matches_singles"
+    t.integer "nb_career_wins_doubles"
+    t.integer "nb_career_losses_doubles"
+    t.integer "nb_career_matches_doubles"
+    t.integer "nb_career_titles_doubles"
+    t.integer "career_highest_ranking_doubles"
+    t.date "career_highest_ranking_date_doubles"
+    t.string "back_hand"
+    t.boolean "active_player", default: true
+    t.boolean "double_specialist", default: false
+    t.string "nationality"
     t.index ["tennis_player_slug"], name: "index_tennis_players_on_tennis_player_slug", unique: true
   end
 
