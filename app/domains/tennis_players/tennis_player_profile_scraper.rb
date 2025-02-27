@@ -10,64 +10,59 @@ module TennisPlayers
     end
 
     def fetch
-      begin
-        @driver.navigate.to(player_url)
+      datas = {}
+      TimeTracker::ProcessTimeTracker.track("Scrap player profile for player: #{tennis_player_slug}") do
+        begin
+          @driver.navigate.to(player_url)
 
-        puts "starting the scraping process using Selenium for initial load..."
+          dismiss_cookie_banner
 
-        dismiss_cookie_banner
+          # print html elements
+          wait = Selenium::WebDriver::Wait.new(timeout: 10)
+          singles_button = wait.until {
+            @driver.find_element(css: "div.player_profile div.atp_player-stats div.stats-type div.tab-switcher ul li:nth-of-type(1) a")
+          }
 
-        # print html elements
-        wait = Selenium::WebDriver::Wait.new(timeout: 10)
-        singles_button = wait.until {
-          @driver.find_element(css: "div.player_profile div.atp_player-stats div.stats-type div.tab-switcher ul li:nth-of-type(1) a")
-        }
-        puts "HTML Content of Element: #{singles_button.attribute('outerHTML')}"
-        puts "Text Content of Element: #{singles_button.text}"
+          # Ensure the element is interactable before clicking
+          if singles_button.displayed? && singles_button.enabled?
+            puts "Clicking on the Singles button..."
+            singles_button.click
+          else
+            puts "Singles button is not interactable."
+            return nil
+          end
 
-        puts "singles_button.displayed?: #{singles_button.displayed?}"
-        puts "singles_button.enabled?: #{singles_button.enabled?}"
+          html = @driver.page_source
+          doc = Nokogiri::HTML(html)
 
-        # Ensure the element is interactable before clicking
-        if singles_button.displayed? && singles_button.enabled?
-          puts "Clicking on the Singles button..."
-          singles_button.click
-        else
-          puts "Singles button is not interactable."
-          return nil
+          datas = {
+            full_name: extract_full_name(doc),
+            date_of_birth: extract_date_of_birth(doc),
+            age: calculate_age(doc),
+            height_in_cm: extract_height(doc),
+            weight_in_kg: extract_weight(doc),
+            place_of_birth: extract_place_of_birth(doc),
+            play_hand: extract_playing_style(doc),
+            back_hand: extract_playing_style(doc),
+            career_highest_ranking_singles: extract_career_highest_ranking(doc),
+            career_highest_ranking_date_singles: extract_career_highest_ranking_date(doc),
+            nb_career_titles_singles: extract_nb_career_titles(doc),
+            nb_career_wins_singles: extract_nb_career_wins(doc),
+            nb_career_losses_singles: extract_nb_career_losses(doc),
+            nb_career_matches_singles: extract_nb_career_wins(doc).to_i + extract_nb_career_losses(doc).to_i,
+            current_coach: extract_coach(doc),
+            career_prize_money: extract_career_prize_money(doc),
+            player_url: player_url
+          }
+        rescue StandardError => e
+          puts "An error occurred: #{e.message}"
+          nil
+        ensure
+          @driver.quit
         end
-
-        html = @driver.page_source
-        doc = Nokogiri::HTML(html)
-
-        data = {
-          full_name: extract_full_name(doc),
-          age: calculate_age(doc),
-          date_of_birth: extract_date_of_birth(doc),
-          weight: extract_weight(doc),
-          height: extract_height(doc),
-          playing_style: extract_playing_style(doc),
-          player_url: player_url,
-          career_highest_ranking: extract_career_highest_ranking(doc),
-          career_highest_ranking_date: extract_career_highest_ranking_date(doc),
-          place_of_birth: extract_place_of_birth(doc),
-          current_coach: extract_coach(doc),
-          career_prize_money: extract_career_prize_money(doc),
-          nb_career_titles: extract_nb_career_titles(doc),
-          nb_career_wins: extract_nb_career_wins(doc),
-          nb_career_losses: extract_nb_career_losses(doc),
-          nb_career_matches: extract_nb_career_wins(doc).to_i + extract_nb_career_losses(doc).to_i
-        }
-
-        puts "Player data: #{data}"
-
-        data
-      rescue StandardError => e
-        puts "An error occurred: #{e.message}"
-        nil
-      ensure
-        @driver.quit
       end
+
+      datas
     end
 
     private
@@ -220,17 +215,6 @@ module TennisPlayers
       doc.css("div.atp_player-personaldetails div.personal_details div.pd_content ul.pd_right li:nth-of-type(4) span:nth-of-type(2)").text.strip
     rescue
       nil
-    end
-
-    def chrome_options
-      options = Selenium::WebDriver::Chrome::Options.new
-      options.add_argument("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36")
-      options.add_argument("--headless") # Run in headless mode
-      options.add_argument("--disable-gpu")
-      options.add_argument("--window-size=1920,1080")
-      options.add_argument("--no-sandbox")
-      options.add_argument("--disable-dev-shm-usage")
-      options
     end
   end
 end
