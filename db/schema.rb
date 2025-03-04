@@ -10,13 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_02_26_210308) do
-  create_table "chats", force: :cascade do |t|
-    t.string "name"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
+ActiveRecord::Schema[8.0].define(version: 2025_03_03_210408) do
   create_table "matches", force: :cascade do |t|
     t.integer "tournament_year_id", null: false
     t.string "tournament_slug", null: false
@@ -34,6 +28,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_26_210308) do
     t.datetime "updated_at", null: false
     t.string "score"
     t.string "ending"
+    t.string "match_stats_id"
     t.index ["player_1_id"], name: "index_matches_on_player_1_id"
     t.index ["player_2_id"], name: "index_matches_on_player_2_id"
     t.index ["player_winner_id"], name: "index_matches_on_player_winner_id"
@@ -42,12 +37,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_26_210308) do
   end
 
   create_table "messages", force: :cascade do |t|
-    t.integer "chat_id", null: false
     t.text "content"
     t.string "role"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["chat_id"], name: "index_messages_on_chat_id"
   end
 
   create_table "player_rankings", force: :cascade do |t|
@@ -104,6 +97,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_26_210308) do
     t.datetime "updated_at", null: false
   end
 
-  add_foreign_key "messages", "chats"
   add_foreign_key "player_rankings", "tennis_players"
 end
