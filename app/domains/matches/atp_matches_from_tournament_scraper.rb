@@ -1,5 +1,3 @@
-# app/domains/tournaments/tournament_scraper.rb
-
 module Matches
   class AtpMatchesFromTournamentScraper < ::Scrapers::BaseScraper
     def initialize(slug:, reference:, year:)
@@ -11,7 +9,6 @@ module Matches
 
     def fetch
       @driver.navigate.to("#{BASE_URL}/en/scores/archive/#{slug}/#{reference}/#{year}/results")
-      # sleep(2)
 
       html = @driver.find_element(css: "div.atp_accordion-items").attribute("outerHTML")
 
@@ -41,7 +38,11 @@ module Matches
     end
 
     def extract_round_matches_data(round)
-      round.css("div.match-group div.match-group-content div.match").map do |match|
+      round.css("div.match-group div.match-group-content div.match")
+           .reject do |match|
+        extract_player_2_slug(match) == "-bye/0" || extract_round(match).include?("qualifying")
+      end
+           .map do |match|
         {
           year_of_tournament: year,
           tournament_slug: slug,
@@ -51,15 +52,14 @@ module Matches
           player_1_slug: extract_player_1_slug(match),
           player_2_slug: extract_player_2_slug(match),
           player_winner_slug: extract_player_winner_slug(match),
-          match_score: extract_match_score(match)
+          match_score: extract_match_score(match),
+          match_stats_id: extract_match_stats_id(match)
         }
       end
     end
 
     def extract_round(match)
       round_text = match.css("div.match-header span").first&.text
-      # split on the last dash to get the round
-      # Semi-finals - Centre Court => Semi-finals
       round_text = round_text.split(" - ").first
 
       if round_text.present?
@@ -97,7 +97,7 @@ module Matches
     def extract_duration(match)
       duration_string = match.css("div.match-header span").last&.text&.strip
       duration_string
-      if duration_string.present?
+      if duration_string.present? && duration_string.include?(":")
         hours, minutes = duration_string.split(":").map(&:to_i)
         hours * 60 + minutes
       else
@@ -109,7 +109,8 @@ module Matches
       begin
         player_1_info = match.css("div.match-content div.match-stats div.stats-item").first
         data = player_1_info.css("div.player-info div.name a").attribute("href").value
-        data.split("/en/players/").last.split("/overview").first
+        slug = data.split("/en/players/").last.split("/overview").first
+        format_player_slug(slug)
       rescue StandardError => e
         puts "Error extracting player 1 profile: #{e.message}"
         nil
@@ -120,7 +121,8 @@ module Matches
       begin
         player_2_info = match.css("div.match-content div.match-stats div.stats-item").last
         data = player_2_info.css("div.player-info div.name a").attribute("href").value
-        data.split("/en/players/").last.split("/overview").first
+        slug = data.split("/en/players/").last.split("/overview").first
+        format_player_slug(slug)
       rescue StandardError => e
         puts "Error extracting player 2 profile: #{e.message}"
         nil
@@ -128,15 +130,34 @@ module Matches
     end
 
     def extract_player_winner_slug(match)
-      match.css("div.match-content div.match-stats div.stats-item").first.css("div.winner").present? ? extract_player_1_slug(match) : extract_player_2_slug(match)
+      slug = match.css("div.match-content div.match-stats div.stats-item").first.css("div.winner").present? ? extract_player_1_slug(match) : extract_player_2_slug(match)
+      format_player_slug(slug)
+    end
+
+    def format_player_slug(player_slug)
+      player_slug.split.map(&:downcase).join("-")
     end
 
     def extract_match_score(match)
       scores = match.css("div.match-content div.match-stats div.stats-item div.scores")
+
       score_player_1 = scores.first.css("div.score-item")
       score_player_2 = scores.last.css("div.score-item")
 
-      compute_match_score(score_player_1.text, score_player_2.text)
+      score_player_1 = score_player_1.map { |score| format_score(score) }.join(" ")
+      score_player_2 = score_player_2.map { |score| format_score(score) }.join(" ")
+
+      compute_match_score(score_player_1, score_player_2)
+    end
+
+    def format_score(score)
+      set_scores = score.css("span").map(&:text).map(&:strip)
+
+      if set_scores.length == 2
+        "#{set_scores[0]}(#{set_scores[1]})"
+      else
+        set_scores[0]
+      end
     end
 
     def compute_match_score(score_player_1, score_player_2)
@@ -144,6 +165,14 @@ module Matches
       scores_player_2 = score_player_2.split
 
       scores_player_1.zip(scores_player_2).map { |s1, s2| "#{s1}/#{s2}" }.join(" ")
+    end
+
+    def extract_match_stats_id(match)
+      elements = match.css("div.match-footer div.match-cta a")
+
+      return nil if elements.empty? || elements.count != 2
+
+      elements.last&.attribute("href")&.value&.split("/")&.last
     end
   end
 end

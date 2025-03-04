@@ -1,23 +1,30 @@
 module PlayerRankings
+  require 'yaml'
   class CreateOrUpdatePlayerRankingOpenEra
     include Service
 
-    def initialize(start_date: "2019-01-07", end_date: "2022-12-26")
-      @start_date = Date.parse(start_date)
-      @end_date = Date.parse(end_date)
+    def initialize(batch_size: 50)
+      @batch_size = batch_size
     end
 
     def call
-      puts "Starting the bulk scraping process..."
-      TimeTracker::ProcessTimeTracker.track("Update all player rankings data") do
-        (@start_date..@end_date).step(7).each do |week_date|
-          week_date_str = week_date.strftime("%Y-%m-%d")
-          puts "Processing week: #{week_date_str}"
+      puts "⏳ Starting the bulk scraping process..."
 
-          PlayerRankings::CreateOrUpdatePlayerRankingWeek.call("0-100", week_date_str)
+      TimeTracker::ProcessTimeTracker.track("Update all player rankings data") do
+        tournament_dates.each_slice(@batch_size) do |batch|
+          ::PlayerRankings::PlayerRankingsBatchJob.perform_later(batch)
         end
       end
-      puts "Finished bulk scraping process."
+
+      puts "✅ Finished bulk scraping process."
     end
+
+    private
+
+    def tournament_dates
+      @tournament_dates ||= YAML.load_file(Rails.root.join('config', 'tournament_dates.yml'))['dates']
+    end
+
+    attr_reader :start_date, :end_date, :batch_size
   end
 end

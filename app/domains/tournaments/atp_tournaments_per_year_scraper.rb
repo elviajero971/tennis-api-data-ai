@@ -14,6 +14,7 @@ module Tournaments
       tournaments_year = []
 
       @driver.find_elements(css: "ul.events").each do |ul|
+        next unless is_tournament_valid?(ul)
         tournaments_year << extract_tournament_year_data(ul)
       end
 
@@ -28,6 +29,7 @@ module Tournaments
     private
 
     def extract_tournament_year_data(ul)
+
       {
         tournament_year: @year,
         tournament_reference: extract_tournament_reference(ul),
@@ -114,6 +116,12 @@ module Tournaments
       player_link.split("/en/players/").last.split("/overview").first
     rescue Selenium::WebDriver::Error::NoSuchElementError
       nil
+    end
+
+    def is_tournament_valid?(element)
+      element.find_element(css: 'dt').text == 'Singles Winner'
+    rescue Selenium::WebDriver::Error::NoSuchElementError
+      false
     end
   end
 end

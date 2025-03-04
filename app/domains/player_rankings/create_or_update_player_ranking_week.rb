@@ -12,8 +12,6 @@ module PlayerRankings
 
       player_rankings_data = PlayerRankings::PlayerRankingWeekScraper.new(rank_range, week_date).fetch
 
-      # add guard if no player_rankings_data
-
       return if player_rankings_data.empty?
 
       player_rankings_data.each do |ranking_data|
