@@ -5,12 +5,12 @@ module Ai
       @client = OpenAI::Client.new(access_token: api_key)
     end
 
-    def chat(prompt)
+    def chat(prompt, system_prompt)
       response = @client.chat(
         parameters: {
           model: @model,
           messages: [
-            { role: "system", content: "You are an AI assistant." },
+            { role: "system", content: system_prompt },
             { role: "user", content: prompt }
           ]
         }
