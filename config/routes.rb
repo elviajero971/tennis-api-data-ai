@@ -14,4 +14,6 @@ Rails.application.routes.draw do
   resources :messages
 
   root "messages#index"
+
+  resources :tasks, only: [ :index, :create ]
 end

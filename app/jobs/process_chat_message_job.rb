@@ -11,17 +11,9 @@ class ProcessChatMessageJob < ApplicationJob
       return
     end
 
-    puts "Executing SQL query: #{sql_query}"
-
     result = execute_sql_query(sql_query)
 
-
-
-    puts "Result of sql query: #{result}"
-
     formatted_answer = Ai::ResultFormatter.new(result).call
-
-    puts "Formatted answer: #{formatted_answer}"
 
     assistant_message.update!(content: formatted_answer)
   end

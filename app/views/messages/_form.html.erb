@@ -1,0 +1,11 @@
+<!-- app/views/messages/_form.html.erb -->
+<%= form_with url: messages_path,
+              method: :post,
+              data: {
+                controller: "reset-form",
+                action: "turbo:submit-end->reset-form#reset"
+              },
+              class: "flex flex-col gap-2" do |f| %>
+  <%= f.text_area :content, placeholder: "Enter a new message...", class: "p-2 border rounded", rows: 3 %>
+  <%= f.submit "Send", class: "px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600" %>
+<% end %>

@@ -15,6 +15,7 @@ module Ai
           ]
         }
       )
+      puts "response of chatgpt: #{response.inspect}"
       response["choices"].first["message"]["content"].strip
     end
   end

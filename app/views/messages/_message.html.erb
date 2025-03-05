@@ -1,7 +1,10 @@
-<div class="flex <%= message.role == 'user' ? 'justify-end' : 'justify-start' %>">
-  <div
-    class="<%= message.role == 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800' %> max-w-xs md:max-w-md p-3 rounded-lg shadow-lg space-y-2"
-  >
-    <%= message.content %>
+<!-- app/views/messages/_message.html.erb -->
+<%= turbo_frame_tag dom_id(message) do %>
+  <div class="p-4">
+    <div class="flex my-1 <%= message.role == 'user' ? 'justify-end' : 'justify-start' %>">
+      <div class="<%= message.role == 'user' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800' %> max-w-xs md:max-w-md p-4 rounded-lg shadow-lg">
+        <%= markdown(message.content) %>
+      </div>
+    </div>
   </div>
-</div>
+<% end %>
